@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/colors.dart';
 import '../../../core/router.dart';
+import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -185,16 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            final email = value?.trim() ?? '';
-                            if (email.isEmpty) {
-                              return 'Email is required';
-                            }
-                            if (!email.contains('@')) {
-                              return 'Enter a valid email';
-                            }
-                            return null;
-                          },
+                          validator: validateSzabistEmail,
                           decoration: const InputDecoration(
                             labelText: 'SZABIST Email',
                             prefixIcon: Icon(

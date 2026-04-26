@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/colors.dart';
+import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/student_model.dart';
 import '../../../shared/widgets/gradient_app_bar.dart';
 import '../../../shared/widgets/gradient_button.dart';
@@ -74,7 +75,7 @@ class MyPartnerScreen extends StatelessWidget {
                       gradient: const LinearGradient(
                         colors: <Color>[
                           Color(0xFFEDE9FE),
-                          Color(0xFFFCE7F3),
+                          Color(0xFFDBEAFE),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(20),
@@ -90,7 +91,7 @@ class MyPartnerScreen extends StatelessWidget {
                           ),
                           child: Center(
                             child: Text(
-                              _initials(partner.name),
+                              getInitials(partner.name),
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontSize: 28,
@@ -180,20 +181,6 @@ class MyPartnerScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static String _initials(String name) {
-    final List<String> parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-    return parts.length == 1
-        ? parts.first[0].toUpperCase()
-        : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
   static Future<void> _launchUrl(String? url) async {

@@ -13,6 +13,10 @@ class AppConstants {
   static const int maxActiveIdeas = 2;
   static const int maxPendingReqs = 5;
 
+  static const double cardBorderRadius = 20.0;
+  static const int maxSkillsShown = 3;
+  static const double chatScrollPadding = 120.0;
+
   static const List<String> departments = ['SE', 'CS', 'AI'];
   static const List<String> batches = ['2020', '2021', '2022', '2023', '2024'];
   static const List<String> skills = [

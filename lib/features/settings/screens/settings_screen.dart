@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/colors.dart';
+import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/student_model.dart';
 import '../../../shared/widgets/gradient_app_bar.dart';
 
@@ -39,7 +40,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          _initials(student.name),
+                          getInitials(student.name),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontSize: 18,
@@ -160,20 +161,6 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static String _initials(String name) {
-    final List<String> parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-    return parts.length == 1
-        ? parts.first[0].toUpperCase()
-        : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
   static Future<void> _confirmLogout(BuildContext context) async {

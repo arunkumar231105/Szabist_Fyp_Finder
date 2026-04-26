@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/colors.dart';
+import '../../../core/constants.dart';
+import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/student_model.dart';
 import '../../../shared/providers/profile_provider.dart';
 import '../../../shared/providers/request_provider.dart';
@@ -250,7 +252,7 @@ class _TargetStudentCard extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                _initials(student.name),
+                getInitials(student.name),
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontSize: 18,
@@ -285,7 +287,7 @@ class _TargetStudentCard extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: student.skills
-                      .take(3)
+                      .take(AppConstants.maxSkillsShown)
                       .map(
                         (String skill) => Container(
                           padding: const EdgeInsets.symmetric(
@@ -316,17 +318,4 @@ class _TargetStudentCard extends StatelessWidget {
     );
   }
 
-  static String _initials(String name) {
-    final List<String> parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-    return parts.length == 1
-        ? parts.first[0].toUpperCase()
-        : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
 }

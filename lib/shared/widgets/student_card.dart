@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/colors.dart';
+import '../../core/constants.dart';
+import '../../core/utils/string_utils.dart';
 import '../models/student_model.dart';
 
 class StudentCard extends StatelessWidget {
@@ -16,7 +18,8 @@ class StudentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> visibleSkills = student.skills.take(3).toList();
+    final List<String> visibleSkills =
+        student.skills.take(AppConstants.maxSkillsShown).toList();
     final int hiddenSkillCount = student.skills.length - visibleSkills.length;
 
     return Stack(
@@ -53,7 +56,7 @@ class StudentCard extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            _initials(student.name),
+                            getInitials(student.name),
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontSize: 18,
@@ -217,21 +220,4 @@ class StudentCard extends StatelessWidget {
     );
   }
 
-  static String _initials(String name) {
-    final List<String> parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-
-    if (parts.length == 1) {
-      return parts.first.substring(0, 1).toUpperCase();
-    }
-
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
 }

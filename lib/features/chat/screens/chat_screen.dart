@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/colors.dart';
+import '../../../core/constants.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../shared/models/chat_thread_model.dart';
 import '../../../shared/models/message_model.dart';
 import '../../../shared/providers/chat_provider.dart';
@@ -95,7 +97,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Text(
-                          _formatTime(message.sentAt),
+                          formatTime(message.sentAt),
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             color: const Color(0xFF94A3B8),
@@ -209,16 +211,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       return;
     }
     _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent + 120,
+      _scrollController.position.maxScrollExtent + AppConstants.chatScrollPadding,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
   }
 
-  static String _formatTime(DateTime time) {
-    final int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
-    final String minute = time.minute.toString().padLeft(2, '0');
-    final String suffix = time.hour >= 12 ? 'PM' : 'AM';
-    return '$hour:$minute $suffix';
-  }
 }

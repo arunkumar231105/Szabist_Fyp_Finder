@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/colors.dart';
+import '../../core/constants.dart';
+import '../../core/utils/string_utils.dart';
 import '../models/idea_model.dart';
 import 'gradient_button.dart';
 
@@ -77,7 +79,7 @@ class IdeaCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: idea.skillsRequired
-                .take(3)
+                .take(AppConstants.maxSkillsShown)
                 .map(
                   (String skill) => Container(
                     padding: const EdgeInsets.symmetric(
@@ -148,7 +150,7 @@ class _Avatar extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          _initials(name),
+          getInitials(name),
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 14,
@@ -159,19 +161,6 @@ class _Avatar extends StatelessWidget {
     );
   }
 
-  static String _initials(String name) {
-    final List<String> parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-    return parts.length == 1
-        ? parts.first[0].toUpperCase()
-        : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
 }
 
 class _DeptChip extends StatelessWidget {

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/colors.dart';
+import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/chat_thread_model.dart';
 import '../../../shared/providers/chat_provider.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -87,7 +89,7 @@ class _ChatItem extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    _initials(chat.partnerName),
+                    getInitials(chat.partnerName),
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 16,
@@ -114,7 +116,7 @@ class _ChatItem extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          _formatTime(chat.lastSentAt),
+                          formatTime(chat.lastSentAt),
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: const Color(0xFF94A3B8),
@@ -162,29 +164,5 @@ class _ChatItem extends StatelessWidget {
     );
   }
 
-  static String _initials(String name) {
-    final List<String> parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-    return parts.length == 1
-        ? parts.first[0].toUpperCase()
-        : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
 }
 
-String _formatTime(DateTime? sentAt) {
-  if (sentAt == null) {
-    return 'Now';
-  }
-
-  final int hour =
-      sentAt.hour > 12 ? sentAt.hour - 12 : (sentAt.hour == 0 ? 12 : sentAt.hour);
-  final String minute = sentAt.minute.toString().padLeft(2, '0');
-  final String suffix = sentAt.hour >= 12 ? 'PM' : 'AM';
-  return '$hour:$minute $suffix';
-}

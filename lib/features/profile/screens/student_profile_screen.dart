@@ -5,9 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/colors.dart';
+import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/student_model.dart';
 import '../../../shared/providers/chat_provider.dart';
 import '../../../shared/widgets/gradient_button.dart';
+import '../../../shared/widgets/profile_widgets.dart';
 
 class StudentProfileScreen extends ConsumerStatefulWidget {
   const StudentProfileScreen({required this.userId, super.key});
@@ -35,7 +37,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String initials = _buildInitials(_student.name);
+    final String initials = getInitials(_student.name);
 
     return Scaffold(
       backgroundColor: AppColors.grey,
@@ -76,7 +78,8 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                     Expanded(
                       child: GradientButton(
                         label: 'Send Partner Request',
-                        onPressed: () => context.push('/send-request/${_student.id}'),
+                        onPressed: () =>
+                            context.push('/send-request/${_student.id}'),
                       ),
                     ),
                   ],
@@ -96,7 +99,9 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                   setState(() => _isBookmarked = !_isBookmarked);
                 },
                 icon: Icon(
-                  _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border,
+                  _isBookmarked
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border,
                 ),
               ),
             ],
@@ -117,8 +122,8 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: <Color>[
-                                Color(0xFF9F67FF),
-                                Color(0xFFFF6CAB),
+                                Color(0xFF818CF8),
+                                Color(0xFF60A5FA),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -163,12 +168,12 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                           spacing: 8,
                           runSpacing: 8,
                           children: <Widget>[
-                            _InfoChip(
+                            ProfileInfoChip(
                               label: _student.department,
                               backgroundColor: Colors.white,
                               textColor: AppColors.primary,
                             ),
-                            _InfoChip(
+                            ProfileInfoChip(
                               label: _student.batch,
                               backgroundColor: Colors.white.withValues(
                                 alpha: 0.16,
@@ -232,7 +237,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       if ((_student.bio ?? '').trim().isNotEmpty) ...<Widget>[
-                        const _SectionTitle(title: 'About Me'),
+                        const ProfileSectionTitle(title: 'About Me'),
                         const SizedBox(height: 10),
                         Text(
                           _student.bio!,
@@ -244,37 +249,20 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                         ),
                         const SizedBox(height: 16),
                       ],
-                      const _LinedSectionHeader(title: 'Skills \u26a1'),
+                      const ProfileLinedSectionHeader(title: 'Skills ⚡'),
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
                         children: _student.skills
                             .map(
-                              (String skill) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: AppColors.primaryGradient,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  skill,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
+                              (String skill) => ProfileGradientChip(label: skill),
                             )
                             .toList(),
                       ),
                       const SizedBox(height: 16),
-                      const _LinedSectionHeader(
-                        title: 'Technologies \u{1F6E0}\uFE0F',
+                      const ProfileLinedSectionHeader(
+                        title: 'Technologies 🛠️',
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -282,7 +270,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                         runSpacing: 10,
                         children: _student.technologies
                             .map(
-                              (String technology) => _SoftChip(
+                              (String technology) => ProfileSoftChip(
                                 label: technology,
                                 backgroundColor: const Color(0xFFCFFAFE),
                                 textColor: const Color(0xFF0F766E),
@@ -291,31 +279,31 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                             .toList(),
                       ),
                       const SizedBox(height: 16),
-                      const _LinedSectionHeader(title: 'Interests \u{1F3AF}'),
+                      const ProfileLinedSectionHeader(title: 'Interests 🎯'),
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
                         children: _student.interests
                             .map(
-                              (String interest) => _SoftChip(
+                              (String interest) => ProfileSoftChip(
                                 label: interest,
-                                backgroundColor: const Color(0xFFFCE7F3),
-                                textColor: const Color(0xFFDB2777),
+                                backgroundColor: const Color(0xFFDBEAFE),
+                                textColor: const Color(0xFF1D4ED8),
                               ),
                             )
                             .toList(),
                       ),
                       const SizedBox(height: 16),
-                      const _LinedSectionHeader(title: 'Links \u{1F517}'),
+                      const ProfileLinedSectionHeader(title: 'Links 🔗'),
                       const SizedBox(height: 10),
-                      _LinkTile(
+                      ProfileLinkTile(
                         icon: Icons.code_rounded,
                         title: 'GitHub',
                         subtitle: _student.githubUrl ?? '',
                         onTap: () => _launchLink(_student.githubUrl),
                       ),
-                      _LinkTile(
+                      ProfileLinkTile(
                         icon: Icons.business_center_outlined,
                         title: 'LinkedIn',
                         subtitle: _student.linkedinUrl ?? '',
@@ -335,29 +323,8 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
     );
   }
 
-  static String _buildInitials(String name) {
-    final List<String> parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-
-    if (parts.length == 1) {
-      return parts.first.substring(0, 1).toUpperCase();
-    }
-
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
-
   static Future<void> _launchLink(String? url) async {
-    if (url == null || url.isEmpty) {
-      return;
-    }
-
+    if (url == null || url.isEmpty) return;
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       throw Exception('Could not launch $url');
@@ -370,174 +337,8 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: AppColors.dark,
-      ),
-    );
-  }
-}
-
-class _LinedSectionHeader extends StatelessWidget {
-  const _LinedSectionHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.dark,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Container(
-            height: 1.5,
-            decoration: BoxDecoration(
-              color: AppColors.dark.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SoftChip extends StatelessWidget {
-  const _SoftChip({
-    required this.label,
-    required this.backgroundColor,
-    required this.textColor,
-  });
-
-  final String label;
-  final Color backgroundColor;
-  final Color textColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.label,
-    required this.backgroundColor,
-    required this.textColor,
-    this.borderColor,
-  });
-
-  final String label;
-  final Color backgroundColor;
-  final Color textColor;
-  final Color? borderColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-        border: borderColor == null ? null : Border.all(color: borderColor!),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-}
-
-class _LinkTile extends StatelessWidget {
-  const _LinkTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: AppColors.lightPurple,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Icon(icon, color: AppColors.primary),
-      ),
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: AppColors.dark,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          color: AppColors.accent,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: const Icon(Icons.open_in_new_rounded, color: AppColors.accent),
-      onTap: onTap,
-    );
-  }
-}
-
 class _ResumeTile extends StatelessWidget {
   const _ResumeTile({required this.onTap});
-
   final VoidCallback onTap;
 
   @override

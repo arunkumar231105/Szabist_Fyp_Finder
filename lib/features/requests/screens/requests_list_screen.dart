@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/colors.dart';
+import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/request_model.dart';
 import '../../../shared/providers/request_provider.dart';
 import '../../../shared/widgets/gradient_app_bar.dart';
@@ -456,7 +457,7 @@ class _Avatar extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          _initials(name),
+          getInitials(name),
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -466,19 +467,6 @@ class _Avatar extends StatelessWidget {
     );
   }
 
-  static String _initials(String value) {
-    final List<String> parts = value
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-    return parts.length == 1
-        ? parts.first[0].toUpperCase()
-        : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
 }
 
 class _DeptChip extends StatelessWidget {

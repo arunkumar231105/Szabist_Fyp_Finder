@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/colors.dart';
+import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/idea_model.dart';
 import '../../../shared/providers/idea_provider.dart';
 import '../../../shared/providers/request_provider.dart';
@@ -59,7 +61,7 @@ class IdeaDetailScreen extends ConsumerWidget {
                       ),
                       child: Center(
                         child: Text(
-                          _initials(idea.ownerName),
+                          getInitials(idea.ownerName),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -147,7 +149,7 @@ class IdeaDetailScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Posted: ${_formatDate(idea.createdAt)}',
+              'Posted: ${formatDate(idea.createdAt)}',
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: const Color(0xFF64748B),
@@ -186,37 +188,6 @@ class IdeaDetailScreen extends ConsumerWidget {
     );
   }
 
-  static String _initials(String name) {
-    final List<String> parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'NA';
-    }
-    return parts.length == 1
-        ? parts.first[0].toUpperCase()
-        : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
-
-  static String _formatDate(DateTime date) {
-    const List<String> months = <String>[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
 }
 
 class _SectionLabel extends StatelessWidget {

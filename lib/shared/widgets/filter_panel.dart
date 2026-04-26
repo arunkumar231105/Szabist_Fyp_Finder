@@ -83,7 +83,7 @@ class _FilterPanelState extends State<FilterPanel> {
                 ],
               ),
               const SizedBox(height: 8),
-              _Label(text: 'Department'),
+              const _Label(text: 'Department'),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _selectedDepartment,
@@ -105,7 +105,7 @@ class _FilterPanelState extends State<FilterPanel> {
                 },
               ),
               const SizedBox(height: 16),
-              _Label(text: 'Batch'),
+              const _Label(text: 'Batch'),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _selectedBatch,
@@ -127,7 +127,7 @@ class _FilterPanelState extends State<FilterPanel> {
                 },
               ),
               const SizedBox(height: 16),
-              _Label(text: 'Skills'),
+              const _Label(text: 'Skills'),
               const SizedBox(height: 8),
               MultiSelectChip(
                 options: AppConstants.skills,
@@ -137,7 +137,7 @@ class _FilterPanelState extends State<FilterPanel> {
                 },
               ),
               const SizedBox(height: 16),
-              _Label(text: 'Technologies'),
+              const _Label(text: 'Technologies'),
               const SizedBox(height: 8),
               MultiSelectChip(
                 options: AppConstants.technologies,
