@@ -17,6 +17,15 @@ class RequestModel {
   final String status;
   final String? withdrawReason;
 
+  factory RequestModel.fromApiJson(Map<String, dynamic> json) => RequestModel(
+    id:           json['id'].toString(),
+    senderName:   json['sender_name']   as String? ?? '',
+    senderDept:   json['sender_dept']   as String? ?? '',
+    receiverName: json['receiver_name'] as String? ?? '',
+    message:      json['message']       as String? ?? '',
+    status:       json['status']        as String? ?? 'pending',
+  );
+
   RequestModel copyWith({
     String? id,
     String? senderName,

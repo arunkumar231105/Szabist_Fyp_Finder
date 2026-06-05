@@ -90,7 +90,7 @@ class _RequestsListScreenState extends ConsumerState<RequestsListScreen>
                   final RequestModel request = requestsState.incoming[index];
                   return _IncomingRequestCard(
                     request: request,
-                    onAccept: () => _acceptRequest(context, request),
+                    onAccept: () => _acceptRequest(request),
                     onReject: () {
                       ref.read(requestsProvider.notifier).rejectIncoming(request.id);
                       _showSnackBar(context, 'Request rejected');
@@ -149,10 +149,11 @@ class _RequestsListScreenState extends ConsumerState<RequestsListScreen>
     );
   }
 
-  void _acceptRequest(BuildContext context, RequestModel request) {
+  Future<void> _acceptRequest(RequestModel request) async {
     final bool accepted =
-        ref.read(requestsProvider.notifier).acceptIncoming(request.id);
+        await ref.read(requestsProvider.notifier).acceptIncoming(request.id);
 
+    if (!mounted) return;
     if (!accepted) {
       _showSnackBar(
         context,

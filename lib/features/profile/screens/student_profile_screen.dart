@@ -8,40 +8,55 @@ import '../../../core/colors.dart';
 import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/student_model.dart';
 import '../../../shared/providers/chat_provider.dart';
+import '../../../shared/providers/students_provider.dart';
 import '../../../shared/widgets/gradient_button.dart';
 import '../../../shared/widgets/profile_widgets.dart';
 
-class StudentProfileScreen extends ConsumerStatefulWidget {
+class StudentProfileScreen extends ConsumerWidget {
   const StudentProfileScreen({required this.userId, super.key});
 
   final String userId;
 
   @override
-  ConsumerState<StudentProfileScreen> createState() =>
-      _StudentProfileScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final allStudents = ref.watch(studentsProvider);
+
+    StudentModel? found;
+    try {
+      found = allStudents.firstWhere((s) => s.id == userId);
+    } catch (_) {
+      found = allStudents.isNotEmpty ? allStudents.first : null;
+    }
+
+    if (found == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return _ProfileBody(student: found);
+  }
 }
 
-class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
-  late final StudentModel _student;
+class _ProfileBody extends ConsumerStatefulWidget {
+  const _ProfileBody({required this.student});
+  final StudentModel student;
+
+  @override
+  ConsumerState<_ProfileBody> createState() => _ProfileBodyState();
+}
+
+class _ProfileBodyState extends ConsumerState<_ProfileBody> {
   bool _isBookmarked = false;
 
   @override
-  void initState() {
-    super.initState();
-    final List<StudentModel> students = StudentModel.dummyList();
-    _student = students.firstWhere(
-      (StudentModel student) => student.id == widget.userId,
-      orElse: () => students.length > 1 ? students[1] : students.first,
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final String initials = getInitials(_student.name);
+    final StudentModel student = widget.student;
+    final String initials = getInitials(student.name);
 
     return Scaffold(
       backgroundColor: AppColors.grey,
-      bottomNavigationBar: _student.isLocked
+      bottomNavigationBar: student.isLocked
           ? null
           : SafeArea(
               top: false,
@@ -79,7 +94,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                       child: GradientButton(
                         label: 'Send Partner Request',
                         onPressed: () =>
-                            context.push('/send-request/${_student.id}'),
+                            context.push('/send-request/${student.id}'),
                       ),
                     ),
                   ],
@@ -154,7 +169,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _student.name,
+                          student.name,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.poppins(
                             color: Colors.white,
@@ -169,17 +184,18 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                           runSpacing: 8,
                           children: <Widget>[
                             ProfileInfoChip(
-                              label: _student.department,
+                              label: student.department,
                               backgroundColor: Colors.white,
                               textColor: AppColors.primary,
                             ),
                             ProfileInfoChip(
-                              label: _student.batch,
+                              label: student.batch,
                               backgroundColor: Colors.white.withValues(
                                 alpha: 0.16,
                               ),
                               textColor: Colors.white,
-                              borderColor: Colors.white.withValues(alpha: 0.22),
+                              borderColor:
+                                  Colors.white.withValues(alpha: 0.22),
                             ),
                           ],
                         ),
@@ -190,7 +206,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
               ),
             ),
           ),
-          if (_student.isLocked)
+          if (student.isLocked)
             SliverToBoxAdapter(
               child: Container(
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -224,23 +240,24 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
               child: Container(
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(28)),
                 ),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
                     20,
-                    _student.isLocked ? 32 : 24,
+                    student.isLocked ? 32 : 24,
                     20,
-                    _student.isLocked ? 32 : 120,
+                    student.isLocked ? 32 : 120,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      if ((_student.bio ?? '').trim().isNotEmpty) ...<Widget>[
+                      if ((student.bio ?? '').trim().isNotEmpty) ...<Widget>[
                         const ProfileSectionTitle(title: 'About Me'),
                         const SizedBox(height: 10),
                         Text(
-                          _student.bio!,
+                          student.bio!,
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             height: 1.6,
@@ -254,9 +271,10 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: _student.skills
+                        children: student.skills
                             .map(
-                              (String skill) => ProfileGradientChip(label: skill),
+                              (String skill) =>
+                                  ProfileGradientChip(label: skill),
                             )
                             .toList(),
                       ),
@@ -268,7 +286,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: _student.technologies
+                        children: student.technologies
                             .map(
                               (String technology) => ProfileSoftChip(
                                 label: technology,
@@ -284,7 +302,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: _student.interests
+                        children: student.interests
                             .map(
                               (String interest) => ProfileSoftChip(
                                 label: interest,
@@ -300,17 +318,17 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                       ProfileLinkTile(
                         icon: Icons.code_rounded,
                         title: 'GitHub',
-                        subtitle: _student.githubUrl ?? '',
-                        onTap: () => _launchLink(_student.githubUrl),
+                        subtitle: student.githubUrl ?? '',
+                        onTap: () => _launchLink(student.githubUrl),
                       ),
                       ProfileLinkTile(
                         icon: Icons.business_center_outlined,
                         title: 'LinkedIn',
-                        subtitle: _student.linkedinUrl ?? '',
-                        onTap: () => _launchLink(_student.linkedinUrl),
+                        subtitle: student.linkedinUrl ?? '',
+                        onTap: () => _launchLink(student.linkedinUrl),
                       ),
                       _ResumeTile(
-                        onTap: () => _launchLink(_student.resumeLink),
+                        onTap: () => _launchLink(student.resumeLink),
                       ),
                     ],
                   ),
@@ -332,7 +350,8 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
   }
 
   void _startChat() {
-    final String chatId = ref.read(chatProvider.notifier).ensureChat(_student);
+    final String chatId =
+        ref.read(chatProvider.notifier).ensureChat(widget.student);
     context.push('/chat/$chatId');
   }
 }

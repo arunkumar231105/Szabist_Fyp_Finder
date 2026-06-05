@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,19 +7,70 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/colors.dart';
 import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/student_model.dart';
+import '../../../shared/providers/request_provider.dart';
+import '../../../shared/providers/students_provider.dart';
 import '../../../shared/widgets/gradient_app_bar.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
-class MyPartnerScreen extends StatelessWidget {
+class MyPartnerScreen extends ConsumerWidget {
   const MyPartnerScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final StudentModel partner = StudentModel.dummyList()[1];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final requestsState = ref.watch(requestsProvider);
+    final allStudents = ref.watch(studentsProvider);
 
+    final String? partnerName = requestsState.acceptedPartnerName;
+
+    StudentModel? partner;
+    if (partnerName != null) {
+      try {
+        partner = allStudents.firstWhere(
+          (s) => s.name == partnerName,
+        );
+      } catch (_) {
+        // Partner name from request, but not yet in students list — show stub
+        partner = StudentModel(
+          id: '0',
+          name: partnerName,
+          email: '',
+          registrationId: '',
+          department: '',
+          section: '',
+          batch: '',
+          skills: const [],
+          technologies: const [],
+          interests: const [],
+          completionPercentage: 0,
+          isLocked: false,
+          isProfilePublic: true,
+        );
+      }
+    }
+
+    if (partner == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.grey,
+        appBar: GradientAppBar(title: 'My Partner 🎉'),
+        body: Center(
+          child: Text('No accepted partner yet.'),
+        ),
+      );
+    }
+
+    return _PartnerBody(partner: partner);
+  }
+}
+
+class _PartnerBody extends StatelessWidget {
+  const _PartnerBody({required this.partner});
+  final StudentModel partner;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.grey,
-      appBar: const GradientAppBar(title: 'My Partner \u{1F389}'),
+      appBar: const GradientAppBar(title: 'My Partner 🎉'),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +94,7 @@ class MyPartnerScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'Team Formed! \u2728',
+                          'Team Formed! ✨',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontSize: 16,
@@ -51,7 +103,7 @@ class MyPartnerScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '31 Mar 2026',
+                          'Partner request accepted',
                           style: GoogleFonts.poppins(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12,
@@ -112,7 +164,9 @@ class MyPartnerScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${partner.department} • ${partner.registrationId}',
+                          partner.department.isEmpty
+                              ? partner.registrationId
+                              : '${partner.department} • ${partner.registrationId}',
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             color: const Color(0xFF64748B),
@@ -121,32 +175,36 @@ class MyPartnerScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const _SectionHeader(title: 'Skills'),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: partner.skills
-                        .map((String skill) => _GradientChip(label: skill))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  const _SectionHeader(title: 'Technologies'),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: partner.technologies
-                        .map(
-                          (String technology) => _SoftChip(
-                            label: technology,
-                            backgroundColor: const Color(0xFFCFFAFE),
-                            textColor: const Color(0xFF0F766E),
-                          ),
-                        )
-                        .toList(),
-                  ),
+                  if (partner.skills.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const _SectionHeader(title: 'Skills'),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: partner.skills
+                          .map((String skill) => _GradientChip(label: skill))
+                          .toList(),
+                    ),
+                  ],
+                  if (partner.technologies.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const _SectionHeader(title: 'Technologies'),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: partner.technologies
+                          .map(
+                            (String technology) => _SoftChip(
+                              label: technology,
+                              backgroundColor: const Color(0xFFCFFAFE),
+                              textColor: const Color(0xFF0F766E),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   const _SectionHeader(title: 'Links'),
                   const SizedBox(height: 10),
@@ -170,8 +228,8 @@ class MyPartnerScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   GradientButton(
-                    label: 'Open Chat \u{1F4AC}',
-                    onPressed: () => context.push('/chat/dummy_chat_id'),
+                    label: 'Open Chat 💬',
+                    onPressed: () => context.push('/chat/partner_chat'),
                   ),
                   const SizedBox(height: 24),
                 ],

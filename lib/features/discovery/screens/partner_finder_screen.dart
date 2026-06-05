@@ -7,6 +7,7 @@ import '../../../core/colors.dart';
 import '../../../shared/models/filter_model.dart';
 import '../../../shared/models/student_model.dart';
 import '../../../shared/providers/profile_provider.dart';
+import '../../../shared/providers/students_provider.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/filter_panel.dart';
 import '../../../shared/widgets/gradient_app_bar.dart';
@@ -39,8 +40,10 @@ class _PartnerFinderScreenState extends ConsumerState<PartnerFinderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(profileProvider);
-    final List<StudentModel> visibleStudents = _filteredStudents();
+    final currentStudent = ref.watch(profileProvider);
+    final allStudents = ref.watch(studentsProvider);
+    final List<StudentModel> visibleStudents =
+        _filteredStudents(currentStudent, allStudents);
 
     final Widget body = Padding(
       padding: const EdgeInsets.all(16),
@@ -118,7 +121,7 @@ class _PartnerFinderScreenState extends ConsumerState<PartnerFinderScreen> {
                       final StudentModel student = visibleStudents[index];
                       return StudentCard(
                         student: student,
-                        onTap: () => student.id == ref.read(profileProvider).id
+                        onTap: () => student.id == currentStudent.id
                             ? context.push('/profile/me')
                             : context.push('/profile/${student.id}'),
                       );
@@ -136,7 +139,7 @@ class _PartnerFinderScreenState extends ConsumerState<PartnerFinderScreen> {
     return Scaffold(
       backgroundColor: AppColors.grey,
       appBar: GradientAppBar(
-        title: 'Find a Partner \u{1F50D}',
+        title: 'Find a Partner 🔍',
         actions: <Widget>[
           IconButton(
             onPressed: _openFilters,
@@ -148,19 +151,21 @@ class _PartnerFinderScreenState extends ConsumerState<PartnerFinderScreen> {
     );
   }
 
-  bool get _hasActiveFilters => _searchQuery.isNotEmpty || !_activeFilters.isEmpty;
+  bool get _hasActiveFilters =>
+      _searchQuery.isNotEmpty || !_activeFilters.isEmpty;
 
-  List<StudentModel> _filteredStudents() {
-    final StudentModel currentStudent = ref.read(profileProvider);
+  List<StudentModel> _filteredStudents(
+      StudentModel currentStudent, List<StudentModel> allStudents) {
     final String query = _searchQuery.toLowerCase();
-    final List<StudentModel> allStudents = <StudentModel>[
-      currentStudent,
-      ...StudentModel.dummyList().where(
-        (StudentModel student) => student.id != currentStudent.id,
-      ),
-    ];
 
-    final List<StudentModel> filtered = allStudents.where((StudentModel student) {
+    // Merge current student at front, deduplicate by id
+    final seen = <String>{};
+    final List<StudentModel> merged = [
+      currentStudent,
+      ...allStudents.where((s) => s.id != currentStudent.id),
+    ].where((s) => seen.add(s.id)).toList();
+
+    final List<StudentModel> filtered = merged.where((StudentModel student) {
       final bool matchesName =
           query.isEmpty || student.name.toLowerCase().contains(query);
       final bool matchesDepartment = _activeFilters.department == null ||

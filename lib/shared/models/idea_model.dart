@@ -23,6 +23,34 @@ class IdeaModel {
   final String status;
   final DateTime createdAt;
 
+  factory IdeaModel.fromJson(Map<String, dynamic> json) {
+    return IdeaModel(
+      id:                   json['id'].toString(),
+      ownerName:            json['ownerName'] as String? ?? '',
+      ownerId:              json['ownerId'].toString(),
+      ownerDept:            json['ownerDept'] as String? ?? '',
+      title:                json['title'] as String? ?? '',
+      description:          json['description'] as String? ?? '',
+      technologiesRequired: List<String>.from(json['technologiesRequired'] as List? ?? []),
+      skillsRequired:       List<String>.from(json['skillsRequired'] as List? ?? []),
+      status:               json['status'] as String? ?? 'open',
+      createdAt:            json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'].toString())
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'ownerName':            ownerName,
+    'ownerId':              ownerId,
+    'ownerDept':            ownerDept,
+    'title':                title,
+    'description':          description,
+    'technologiesRequired': technologiesRequired,
+    'skillsRequired':       skillsRequired,
+    'status':               status,
+  };
+
   static List<IdeaModel> dummyIdeas() {
     return <IdeaModel>[
       IdeaModel(

@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/colors.dart';
 import '../../../core/utils/string_utils.dart';
-import '../../../shared/models/student_model.dart';
+import '../../../shared/providers/profile_provider.dart';
 import '../../../shared/widgets/gradient_app_bar.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final StudentModel student = StudentModel.dummyStudent();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final student = ref.watch(profileProvider);
 
     return Scaffold(
       backgroundColor: AppColors.grey,
-      appBar: const GradientAppBar(title: 'Settings \u2699\ufe0f'),
+      appBar: const GradientAppBar(title: 'Settings ⚙️'),
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[

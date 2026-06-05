@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../models/request_model.dart';
 import '../models/student_model.dart';
+import '../services/api_service.dart';
 
 class RequestsState {
   const RequestsState({
@@ -15,10 +15,8 @@ class RequestsState {
   final String? acceptedPartnerName;
 
   bool get hasPendingOutgoing =>
-      outgoing.any((RequestModel request) => request.status == 'pending');
-
+      outgoing.any((r) => r.status == 'pending');
   bool get hasAcceptedPartner => acceptedPartnerName != null;
-
   bool get canCreateNewRequest => !hasPendingOutgoing && !hasAcceptedPartner;
 
   RequestsState copyWith({
@@ -26,57 +24,62 @@ class RequestsState {
     List<RequestModel>? outgoing,
     String? acceptedPartnerName,
     bool clearAcceptedPartner = false,
-  }) {
-    return RequestsState(
-      incoming: incoming ?? this.incoming,
-      outgoing: outgoing ?? this.outgoing,
-      acceptedPartnerName:
-          clearAcceptedPartner ? null : (acceptedPartnerName ?? this.acceptedPartnerName),
-    );
-  }
-
-  static RequestsState dummy() {
-    return RequestsState(
-      incoming: RequestModel.dummyIncoming(),
-      outgoing: RequestModel.dummyOutgoing(),
-      acceptedPartnerName: null,
-    );
-  }
+  }) =>
+      RequestsState(
+        incoming: incoming ?? this.incoming,
+        outgoing: outgoing ?? this.outgoing,
+        acceptedPartnerName: clearAcceptedPartner
+            ? null
+            : (acceptedPartnerName ?? this.acceptedPartnerName),
+      );
 }
 
 class RequestsNotifier extends StateNotifier<RequestsState> {
-  RequestsNotifier() : super(RequestsState.dummy());
+  RequestsNotifier()
+      : super(const RequestsState(incoming: [], outgoing: [])) {
+    loadFromApi();
+  }
 
-  bool acceptIncoming(String requestId) {
-    final RequestModel request = state.incoming.firstWhere(
-      (RequestModel item) => item.id == requestId,
-    );
+  Future<void> loadFromApi() async {
+    try {
+      final all = await RequestsApi.getAll();
 
-    if (state.acceptedPartnerName != null &&
-        state.acceptedPartnerName != request.senderName) {
-      return false;
+      final List<RequestModel> incoming = all
+          .where((r) => r['receiver_name'] == 'Arun Kumar')
+          .map((r) => RequestModel.fromApiJson(r))
+          .toList();
+
+      final List<RequestModel> outgoing = all
+          .where((r) => r['sender_name'] == 'Arun Kumar')
+          .map((r) => RequestModel.fromApiJson(r))
+          .toList();
+
+      state = state.copyWith(incoming: incoming, outgoing: outgoing);
+    } catch (_) {
+      // keep empty state on API error
     }
+  }
+
+  Future<bool> acceptIncoming(String requestId) async {
+    final req =
+        state.incoming.firstWhere((r) => r.id == requestId);
+    try {
+      await RequestsApi.update(int.parse(requestId), {
+        'senderName':   req.senderName,
+        'senderDept':   req.senderDept,
+        'receiverName': req.receiverName,
+        'message':      req.message,
+        'status':       'accepted',
+      });
+    } catch (_) {}
 
     state = state.copyWith(
-      acceptedPartnerName: request.senderName,
-      incoming: state.incoming
-          .map((RequestModel item) {
-            if (item.id == requestId) {
-              return item.copyWith(status: 'accepted');
-            }
-            if (item.status == 'pending') {
-              return item.copyWith(status: 'rejected');
-            }
-            return item;
-          })
-          .toList(),
-      outgoing: state.outgoing
-          .map(
-            (RequestModel item) => item.status == 'pending'
-                ? item.copyWith(status: 'rejected')
-                : item,
-          )
-          .toList(),
+      acceptedPartnerName: req.senderName,
+      incoming: state.incoming.map((r) {
+        if (r.id == requestId) return r.copyWith(status: 'accepted');
+        if (r.status == 'pending') return r.copyWith(status: 'rejected');
+        return r;
+      }).toList(),
     );
     return true;
   }
@@ -84,10 +87,8 @@ class RequestsNotifier extends StateNotifier<RequestsState> {
   void rejectIncoming(String requestId) {
     state = state.copyWith(
       incoming: state.incoming
-          .map(
-            (RequestModel item) =>
-                item.id == requestId ? item.copyWith(status: 'rejected') : item,
-          )
+          .map((r) =>
+              r.id == requestId ? r.copyWith(status: 'rejected') : r)
           .toList(),
     );
   }
@@ -95,72 +96,65 @@ class RequestsNotifier extends StateNotifier<RequestsState> {
   void cancelOutgoing(String requestId) {
     state = state.copyWith(
       outgoing: state.outgoing
-          .map(
-            (RequestModel item) =>
-                item.id == requestId ? item.copyWith(status: 'rejected') : item,
-          )
+          .map((r) =>
+              r.id == requestId ? r.copyWith(status: 'rejected') : r)
           .toList(),
     );
   }
 
-  bool addOutgoingRequest({
+  Future<bool> addOutgoingRequest({
     required StudentModel currentStudent,
     required StudentModel targetStudent,
     required String message,
-  }) {
-    if (!state.canCreateNewRequest) {
+  }) async {
+    if (!state.canCreateNewRequest) return false;
+    final msg = message.trim().isEmpty
+        ? 'Hi! I think we would make a great team.'
+        : message.trim();
+    try {
+      final newId = await RequestsApi.create({
+        'senderName':   currentStudent.name,
+        'senderDept':   currentStudent.department,
+        'receiverName': targetStudent.name,
+        'message':      msg,
+      });
+      state = state.copyWith(
+        outgoing: [
+          RequestModel(
+            id:           newId.toString(),
+            senderName:   currentStudent.name,
+            senderDept:   currentStudent.department,
+            receiverName: targetStudent.name,
+            message:      msg,
+            status:       'pending',
+          ),
+          ...state.outgoing,
+        ],
+      );
+    } catch (_) {
       return false;
     }
-
-    state = state.copyWith(
-      outgoing: <RequestModel>[
-        RequestModel(
-          id: 'req_out_${DateTime.now().millisecondsSinceEpoch}',
-          senderName: currentStudent.name,
-          senderDept: currentStudent.department,
-          receiverName: targetStudent.name,
-          message: message.trim().isEmpty
-              ? 'Hi! I think we would make a great team.'
-              : message.trim(),
-          status: 'pending',
-        ),
-        ...state.outgoing,
-      ],
-    );
     return true;
   }
 
   void withdrawAcceptedPartner(String requestId) {
     state = state.copyWith(
       clearAcceptedPartner: true,
-      incoming: state.incoming
-          .map((RequestModel item) {
-            if (item.id == requestId && item.status == 'accepted') {
-              return item.copyWith(
-                status: 'withdrawn',
-                clearWithdrawReason: true,
-              );
-            }
-            if (item.status == 'rejected') {
-              return item.copyWith(
-                status: 'pending',
-                clearWithdrawReason: true,
-              );
-            }
-            return item;
-          })
-          .toList(),
-      outgoing: state.outgoing
-          .map((RequestModel item) {
-            if (item.status == 'rejected') {
-              return item.copyWith(
-                status: 'pending',
-                clearWithdrawReason: true,
-              );
-            }
-            return item;
-          })
-          .toList(),
+      incoming: state.incoming.map((r) {
+        if (r.id == requestId && r.status == 'accepted') {
+          return r.copyWith(status: 'withdrawn', clearWithdrawReason: true);
+        }
+        if (r.status == 'rejected') {
+          return r.copyWith(status: 'pending', clearWithdrawReason: true);
+        }
+        return r;
+      }).toList(),
+      outgoing: state.outgoing.map((r) {
+        if (r.status == 'rejected') {
+          return r.copyWith(status: 'pending', clearWithdrawReason: true);
+        }
+        return r;
+      }).toList(),
     );
   }
 }

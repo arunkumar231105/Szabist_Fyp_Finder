@@ -75,13 +75,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Container(
                 height: topSectionHeight,
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.vertical(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(
                     bottom: Radius.circular(44),
                   ),
                   image: DecorationImage(
-                    image: AssetImage('assets/images/szabist_campus.jpeg'),
+                    image: const AssetImage('assets/images/szabist_campus.jpeg'),
                     fit: BoxFit.cover,
+                    onError: (_, __) {},
                   ),
                 ),
                 child: Container(

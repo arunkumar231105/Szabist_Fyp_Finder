@@ -9,6 +9,7 @@ import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/student_model.dart';
 import '../../../shared/providers/profile_provider.dart';
 import '../../../shared/providers/request_provider.dart';
+import '../../../shared/providers/students_provider.dart';
 import '../../../shared/widgets/gradient_app_bar.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
@@ -25,18 +26,6 @@ class _SendRequestScreenState extends ConsumerState<SendRequestScreen> {
   final TextEditingController _messageController = TextEditingController();
   bool _isSending = false;
 
-  late final StudentModel _targetStudent;
-
-  @override
-  void initState() {
-    super.initState();
-    final List<StudentModel> students = StudentModel.dummyList();
-    _targetStudent = students.firstWhere(
-      (StudentModel student) => student.id == widget.userId,
-      orElse: () => students.length > 1 ? students[1] : students.first,
-    );
-  }
-
   @override
   void dispose() {
     _messageController.dispose();
@@ -47,12 +36,29 @@ class _SendRequestScreenState extends ConsumerState<SendRequestScreen> {
   Widget build(BuildContext context) {
     final StudentModel currentStudent = ref.watch(profileProvider);
     final RequestsState requestsState = ref.watch(requestsProvider);
+    final allStudents = ref.watch(studentsProvider);
+
+    StudentModel? targetStudent;
+    try {
+      targetStudent =
+          allStudents.firstWhere((s) => s.id == widget.userId);
+    } catch (_) {
+      targetStudent = allStudents.isNotEmpty ? allStudents.first : null;
+    }
+
+    if (targetStudent == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final bool canSendRequest = currentStudent.isProfilePublic;
     final bool canCreateNewRequest = requestsState.canCreateNewRequest;
+    final StudentModel target = targetStudent;
 
     return Scaffold(
       backgroundColor: AppColors.grey,
-      appBar: const GradientAppBar(title: 'Send Request \u{1F91D}'),
+      appBar: const GradientAppBar(title: 'Send Request 🤝'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -88,7 +94,7 @@ class _SendRequestScreenState extends ConsumerState<SendRequestScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            _TargetStudentCard(student: _targetStudent),
+            _TargetStudentCard(student: target),
             const SizedBox(height: 20),
             Text(
               'Add a message (optional)',
@@ -105,7 +111,8 @@ class _SendRequestScreenState extends ConsumerState<SendRequestScreen> {
               maxLength: 200,
               decoration: InputDecoration(
                 hintText: 'Hi! I think we would make a great team...',
-                hintStyle: GoogleFonts.poppins(color: const Color(0xFF94A3B8)),
+                hintStyle:
+                    GoogleFonts.poppins(color: const Color(0xFF94A3B8)),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -130,6 +137,7 @@ class _SendRequestScreenState extends ConsumerState<SendRequestScreen> {
                 canSendRequest: canSendRequest,
                 canCreateNewRequest: canCreateNewRequest,
                 currentStudent: currentStudent,
+                targetStudent: target,
               ),
             ),
             const SizedBox(height: 12),
@@ -155,6 +163,7 @@ class _SendRequestScreenState extends ConsumerState<SendRequestScreen> {
     required bool canSendRequest,
     required bool canCreateNewRequest,
     required StudentModel currentStudent,
+    required StudentModel targetStudent,
   }) async {
     FocusScope.of(context).unfocus();
     if (!canSendRequest) {
@@ -183,18 +192,16 @@ class _SendRequestScreenState extends ConsumerState<SendRequestScreen> {
     }
 
     setState(() => _isSending = true);
-    await Future<void>.delayed(const Duration(seconds: 1));
 
-    if (!mounted) {
-      return;
-    }
-
-    final bool added = ref.read(requestsProvider.notifier).addOutgoingRequest(
+    final bool added = await ref.read(requestsProvider.notifier).addOutgoingRequest(
           currentStudent: currentStudent,
-          targetStudent: _targetStudent,
+          targetStudent: targetStudent,
           message: _messageController.text,
         );
+
+    if (!mounted) return;
     setState(() => _isSending = false);
+
     if (!added) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -210,7 +217,7 @@ class _SendRequestScreenState extends ConsumerState<SendRequestScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Request sent! \u2728',
+          'Request sent! ✨',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         behavior: SnackBarBehavior.floating,
@@ -317,5 +324,4 @@ class _TargetStudentCard extends StatelessWidget {
       ),
     );
   }
-
 }
