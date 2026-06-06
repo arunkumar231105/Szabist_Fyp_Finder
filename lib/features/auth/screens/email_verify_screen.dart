@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/colors.dart';
-import '../../../core/router.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
 class EmailVerifyScreen extends ConsumerWidget {
@@ -66,8 +65,7 @@ class EmailVerifyScreen extends ConsumerWidget {
                   GradientButton(
                     label: 'I have verified, Continue',
                     onPressed: () {
-                      ref.read(mockAuthProvider.notifier).state = true;
-                      context.go('/home');
+                      context.go('/login');
                     },
                   ),
                   const SizedBox(height: 12),

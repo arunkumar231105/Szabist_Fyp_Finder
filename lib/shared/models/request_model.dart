@@ -18,12 +18,17 @@ class RequestModel {
   final String? withdrawReason;
 
   factory RequestModel.fromApiJson(Map<String, dynamic> json) => RequestModel(
-    id:           json['id'].toString(),
-    senderName:   json['sender_name']   as String? ?? '',
-    senderDept:   json['sender_dept']   as String? ?? '',
-    receiverName: json['receiver_name'] as String? ?? '',
-    message:      json['message']       as String? ?? '',
-    status:       json['status']        as String? ?? 'pending',
+    id: json['id'].toString(),
+    senderName:
+        json['senderName'] as String? ?? json['sender_name'] as String? ?? '',
+    senderDept:
+        json['senderDept'] as String? ?? json['sender_dept'] as String? ?? '',
+    receiverName:
+        json['receiverName'] as String? ??
+        json['receiver_name'] as String? ??
+        '',
+    message: json['message'] as String? ?? '',
+    status: json['status'] as String? ?? 'pending',
   );
 
   RequestModel copyWith({
@@ -56,7 +61,8 @@ class RequestModel {
         senderName: 'Ayesha Khan',
         senderDept: 'CS',
         receiverName: 'Arun Kumar',
-        message: 'I love mobile dev too. Want to team up for a cross-platform FYP?',
+        message:
+            'I love mobile dev too. Want to team up for a cross-platform FYP?',
         status: 'pending',
       ),
       RequestModel(
@@ -64,7 +70,8 @@ class RequestModel {
         senderName: 'Maham Raza',
         senderDept: 'AI',
         receiverName: 'Arun Kumar',
-        message: 'Your AI and app background feels like a strong match for my vision idea.',
+        message:
+            'Your AI and app background feels like a strong match for my vision idea.',
         status: 'pending',
       ),
       RequestModel(
@@ -72,7 +79,8 @@ class RequestModel {
         senderName: 'Sara Noor',
         senderDept: 'CS',
         receiverName: 'Arun Kumar',
-        message: 'Interested in building something security-focused with mobile and ML?',
+        message:
+            'Interested in building something security-focused with mobile and ML?',
         status: 'pending',
       ),
     ];
@@ -85,7 +93,8 @@ class RequestModel {
         senderName: 'Arun Kumar',
         senderDept: 'SE',
         receiverName: 'Bilal Ahmed',
-        message: 'Your backend skills would pair nicely with my Flutter experience.',
+        message:
+            'Your backend skills would pair nicely with my Flutter experience.',
         status: 'pending',
       ),
       RequestModel(
@@ -93,7 +102,8 @@ class RequestModel {
         senderName: 'Arun Kumar',
         senderDept: 'SE',
         receiverName: 'Hamza Ali',
-        message: 'Thinking of an IoT + app combo project if you are interested.',
+        message:
+            'Thinking of an IoT + app combo project if you are interested.',
         status: 'accepted',
       ),
     ];

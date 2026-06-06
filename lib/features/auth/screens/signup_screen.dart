@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/colors.dart';
 import '../../../core/constants.dart';
+import '../../../shared/services/api_service.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -16,6 +17,10 @@ class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _registrationController = TextEditingController();
+  final _departmentController = TextEditingController();
+  final _sectionController = TextEditingController();
+  final _batchController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -27,6 +32,10 @@ class _SignupScreenState extends State<SignupScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _registrationController.dispose();
+    _departmentController.dispose();
+    _sectionController.dispose();
+    _batchController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -42,16 +51,47 @@ class _SignupScreenState extends State<SignupScreen> {
       _isLoading = true;
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) {
-      return;
+    try {
+      await AuthApi.register({
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim().toLowerCase(),
+        'password': _passwordController.text,
+        'registrationId': _registrationController.text.trim(),
+        'department': _departmentController.text.trim(),
+        'section': _sectionController.text.trim(),
+        'batch': _batchController.text.trim(),
+      });
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registration successful. Please login.'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+
+      context.go('/login');
+    } catch (err) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    context.go('/verify-email');
   }
 
   @override
@@ -170,6 +210,72 @@ class _SignupScreenState extends State<SignupScreen> {
                             labelText: 'SZABIST Email',
                             prefixIcon: Icon(
                               Icons.email_outlined,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _registrationController,
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if ((value ?? '').trim().isEmpty) {
+                              return 'Registration ID is required';
+                            }
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Registration ID',
+                            prefixIcon: Icon(
+                              Icons.badge_outlined,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _departmentController,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                validator: (value) {
+                                  if ((value ?? '').trim().isEmpty) {
+                                    return 'Department is required';
+                                  }
+                                  return null;
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Department',
+                                  prefixIcon: Icon(
+                                    Icons.school_outlined,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _sectionController,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                decoration: const InputDecoration(
+                                  labelText: 'Section',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _batchController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Batch',
+                            prefixIcon: Icon(
+                              Icons.calendar_today_outlined,
                               color: AppColors.primary,
                             ),
                           ),

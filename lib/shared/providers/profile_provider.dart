@@ -1,36 +1,49 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/student_model.dart';
 import '../services/api_service.dart';
 
+const _emptyStudent = StudentModel(
+  id: '',
+  name: '',
+  email: '',
+  registrationId: '',
+  department: '',
+  section: '',
+  batch: '',
+  skills: <String>[],
+  technologies: <String>[],
+  interests: <String>[],
+  completionPercentage: 0,
+  isLocked: false,
+  isProfilePublic: true,
+);
+
 class ProfileNotifier extends StateNotifier<StudentModel> {
-  ProfileNotifier() : super(StudentModel.dummyStudent()) {
+  ProfileNotifier() : super(_emptyStudent) {
     loadFromApi();
   }
 
-  // API se logged-in student load karo (id=1 = current user)
   Future<void> loadFromApi() async {
     try {
-      final raw = await StudentsApi.getById(1);
+      final prefs = await SharedPreferences.getInstance();
+      final studentId = prefs.getInt('student_id') ?? 1;
+      final raw = await StudentsApi.getById(studentId);
       state = StudentModel.fromJson(raw);
-    } catch (_) {
-      // API nahi mili to dummy data rehne do
-    }
+    } catch (_) {}
   }
 
-  // Profile update karo
-  void updateProfile(StudentModel student) {
+  Future<void> updateProfile(StudentModel student) async {
     state = student;
-    _syncToApi(student);
-  }
-
-  Future<void> _syncToApi(StudentModel s) async {
     try {
-      await StudentsApi.update(int.parse(s.id.isEmpty ? '1' : s.id), s.toJson());
+      await StudentsApi.update(int.parse(student.id), student.toJson());
     } catch (_) {}
   }
 }
 
-final profileProvider =
-    StateNotifierProvider<ProfileNotifier, StudentModel>((ref) {
+final profileProvider = StateNotifierProvider<ProfileNotifier, StudentModel>((
+  ref,
+) {
   return ProfileNotifier();
 });

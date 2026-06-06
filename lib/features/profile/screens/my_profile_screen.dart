@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/colors.dart';
-import '../../../core/router.dart';
+import '../../../shared/providers/auth_provider.dart';
 import '../../../core/utils/string_utils.dart';
 import '../../../shared/models/student_model.dart';
 import '../../../shared/providers/profile_provider.dart';
@@ -166,8 +166,10 @@ class MyProfileScreen extends ConsumerWidget {
                         spacing: 10,
                         runSpacing: 10,
                         children: student.skills
-                            .map((String skill) =>
-                                ProfileGradientChip(label: skill))
+                            .map(
+                              (String skill) =>
+                                  ProfileGradientChip(label: skill),
+                            )
                             .toList(),
                       ),
                       const SizedBox(height: 16),
@@ -324,7 +326,8 @@ class MyProfileScreen extends ConsumerWidget {
     );
 
     if (shouldLogout != true || !context.mounted) return;
-    ref.read(mockAuthProvider.notifier).state = false;
+    await ref.read(authProvider.notifier).logout();
+    if (!context.mounted) return;
     context.go('/login');
   }
 }
@@ -401,9 +404,7 @@ class _VisibilityBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isPublic
-            ? const Color(0xFFECFDF5)
-            : const Color(0xFFFFF1F2),
+        color: isPublic ? const Color(0xFFECFDF5) : const Color(0xFFFFF1F2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -447,7 +448,10 @@ class _ResumeTile extends StatelessWidget {
           color: const Color(0xFFDBEAFE),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Icon(Icons.description_outlined, color: AppColors.secondary),
+        child: const Icon(
+          Icons.description_outlined,
+          color: AppColors.secondary,
+        ),
       ),
       title: Text(
         'Resume (Drive)',

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/colors.dart';
-import '../../../core/router.dart';
 import '../../../core/utils/validators.dart';
+import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -39,24 +39,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _isLoading = true;
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) {
-      return;
+    try {
+      await ref
+          .read(authProvider.notifier)
+          .login(_emailController.text.trim(), _passwordController.text);
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login successful!'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+
+      context.go('/home');
+    } catch (err) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Login successful!'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
-
-    ref.read(mockAuthProvider.notifier).state = true;
-    context.go('/home');
   }
 
   @override
@@ -80,7 +97,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     bottom: Radius.circular(44),
                   ),
                   image: DecorationImage(
-                    image: const AssetImage('assets/images/szabist_campus.jpeg'),
+                    image: const AssetImage(
+                      'assets/images/szabist_campus.jpeg',
+                    ),
                     fit: BoxFit.cover,
                     onError: (_, __) {},
                   ),

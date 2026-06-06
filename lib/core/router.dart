@@ -22,11 +22,10 @@ import '../features/requests/screens/my_partner_screen.dart';
 import '../features/requests/screens/requests_list_screen.dart';
 import '../features/requests/screens/send_request_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
-
-final mockAuthProvider = StateProvider<bool>((ref) => false);
+import '../shared/providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final isLoggedIn = ref.watch(mockAuthProvider);
+  final isLoggedIn = ref.watch(authProvider);
   const authRoutes = <String>{
     '/',
     '/login',
@@ -148,9 +147,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/idea/:ideaId',
         builder: (BuildContext context, GoRouterState state) {
-          return IdeaDetailScreen(
-            ideaId: state.pathParameters['ideaId'] ?? '',
-          );
+          return IdeaDetailScreen(ideaId: state.pathParameters['ideaId'] ?? '');
         },
       ),
       GoRoute(
@@ -162,9 +159,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/chat/:chatId',
         builder: (BuildContext context, GoRouterState state) {
-          return ChatScreen(
-            chatId: state.pathParameters['chatId'] ?? '',
-          );
+          return ChatScreen(chatId: state.pathParameters['chatId'] ?? '');
         },
       ),
       GoRoute(

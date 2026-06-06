@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/student_model.dart';
 import '../services/api_service.dart';
 
 class StudentsNotifier extends StateNotifier<List<StudentModel>> {
-  StudentsNotifier() : super(StudentModel.dummyList()) {
+  StudentsNotifier() : super([]) {
     loadFromApi();
   }
 
@@ -11,14 +12,12 @@ class StudentsNotifier extends StateNotifier<List<StudentModel>> {
     try {
       final raw = await StudentsApi.getAll();
       state = raw.map(StudentModel.fromJson).toList();
-    } catch (_) {
-      // keep dummy list on API error so UI stays functional
-    }
+    } catch (_) {}
   }
 
   StudentModel? findById(String id) {
     try {
-      return state.firstWhere((s) => s.id == id);
+      return state.firstWhere((student) => student.id == id);
     } catch (_) {
       return null;
     }
@@ -27,5 +26,5 @@ class StudentsNotifier extends StateNotifier<List<StudentModel>> {
 
 final studentsProvider =
     StateNotifierProvider<StudentsNotifier, List<StudentModel>>((ref) {
-  return StudentsNotifier();
-});
+      return StudentsNotifier();
+    });

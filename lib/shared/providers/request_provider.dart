@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/request_model.dart';
 import '../models/student_model.dart';
 import '../services/api_service.dart';
@@ -15,7 +16,7 @@ class RequestsState {
   final String? acceptedPartnerName;
 
   bool get hasPendingOutgoing =>
-      outgoing.any((r) => r.status == 'pending');
+      outgoing.any((request) => request.status == 'pending');
   bool get hasAcceptedPartner => acceptedPartnerName != null;
   bool get canCreateNewRequest => !hasPendingOutgoing && !hasAcceptedPartner;
 
@@ -24,82 +25,62 @@ class RequestsState {
     List<RequestModel>? outgoing,
     String? acceptedPartnerName,
     bool clearAcceptedPartner = false,
-  }) =>
-      RequestsState(
-        incoming: incoming ?? this.incoming,
-        outgoing: outgoing ?? this.outgoing,
-        acceptedPartnerName: clearAcceptedPartner
-            ? null
-            : (acceptedPartnerName ?? this.acceptedPartnerName),
-      );
+  }) {
+    return RequestsState(
+      incoming: incoming ?? this.incoming,
+      outgoing: outgoing ?? this.outgoing,
+      acceptedPartnerName: clearAcceptedPartner
+          ? null
+          : (acceptedPartnerName ?? this.acceptedPartnerName),
+    );
+  }
 }
 
 class RequestsNotifier extends StateNotifier<RequestsState> {
-  RequestsNotifier()
-      : super(const RequestsState(incoming: [], outgoing: [])) {
+  RequestsNotifier() : super(const RequestsState(incoming: [], outgoing: [])) {
     loadFromApi();
   }
 
   Future<void> loadFromApi() async {
     try {
-      final all = await RequestsApi.getAll();
+      final incomingRaw = await RequestsApi.getIncoming();
+      final outgoingRaw = await RequestsApi.getOutgoing();
 
-      final List<RequestModel> incoming = all
-          .where((r) => r['receiver_name'] == 'Arun Kumar')
-          .map((r) => RequestModel.fromApiJson(r))
-          .toList();
+      final incoming = incomingRaw.map(RequestModel.fromApiJson).toList();
+      final outgoing = outgoingRaw.map(RequestModel.fromApiJson).toList();
+      final acceptedPartner = _acceptedPartnerName(incoming, outgoing);
 
-      final List<RequestModel> outgoing = all
-          .where((r) => r['sender_name'] == 'Arun Kumar')
-          .map((r) => RequestModel.fromApiJson(r))
-          .toList();
-
-      state = state.copyWith(incoming: incoming, outgoing: outgoing);
-    } catch (_) {
-      // keep empty state on API error
-    }
+      state = state.copyWith(
+        incoming: incoming,
+        outgoing: outgoing,
+        acceptedPartnerName: acceptedPartner,
+        clearAcceptedPartner: acceptedPartner == null,
+      );
+    } catch (_) {}
   }
 
   Future<bool> acceptIncoming(String requestId) async {
-    final req =
-        state.incoming.firstWhere((r) => r.id == requestId);
     try {
-      await RequestsApi.update(int.parse(requestId), {
-        'senderName':   req.senderName,
-        'senderDept':   req.senderDept,
-        'receiverName': req.receiverName,
-        'message':      req.message,
-        'status':       'accepted',
-      });
+      await RequestsApi.accept(int.parse(requestId));
+      await loadFromApi();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> rejectIncoming(String requestId) async {
+    try {
+      await RequestsApi.reject(int.parse(requestId));
+      await loadFromApi();
     } catch (_) {}
-
-    state = state.copyWith(
-      acceptedPartnerName: req.senderName,
-      incoming: state.incoming.map((r) {
-        if (r.id == requestId) return r.copyWith(status: 'accepted');
-        if (r.status == 'pending') return r.copyWith(status: 'rejected');
-        return r;
-      }).toList(),
-    );
-    return true;
   }
 
-  void rejectIncoming(String requestId) {
-    state = state.copyWith(
-      incoming: state.incoming
-          .map((r) =>
-              r.id == requestId ? r.copyWith(status: 'rejected') : r)
-          .toList(),
-    );
-  }
-
-  void cancelOutgoing(String requestId) {
-    state = state.copyWith(
-      outgoing: state.outgoing
-          .map((r) =>
-              r.id == requestId ? r.copyWith(status: 'rejected') : r)
-          .toList(),
-    );
+  Future<void> cancelOutgoing(String requestId) async {
+    try {
+      await RequestsApi.delete(int.parse(requestId));
+      await loadFromApi();
+    } catch (_) {}
   }
 
   Future<bool> addOutgoingRequest({
@@ -108,58 +89,45 @@ class RequestsNotifier extends StateNotifier<RequestsState> {
     required String message,
   }) async {
     if (!state.canCreateNewRequest) return false;
+
     final msg = message.trim().isEmpty
         ? 'Hi! I think we would make a great team.'
         : message.trim();
+
     try {
-      final newId = await RequestsApi.create({
-        'senderName':   currentStudent.name,
-        'senderDept':   currentStudent.department,
-        'receiverName': targetStudent.name,
-        'message':      msg,
+      await RequestsApi.create({
+        'receiverId': int.tryParse(targetStudent.id) ?? 0,
+        'message': msg,
       });
-      state = state.copyWith(
-        outgoing: [
-          RequestModel(
-            id:           newId.toString(),
-            senderName:   currentStudent.name,
-            senderDept:   currentStudent.department,
-            receiverName: targetStudent.name,
-            message:      msg,
-            status:       'pending',
-          ),
-          ...state.outgoing,
-        ],
-      );
+      await loadFromApi();
+      return true;
     } catch (_) {
       return false;
     }
-    return true;
   }
 
-  void withdrawAcceptedPartner(String requestId) {
-    state = state.copyWith(
-      clearAcceptedPartner: true,
-      incoming: state.incoming.map((r) {
-        if (r.id == requestId && r.status == 'accepted') {
-          return r.copyWith(status: 'withdrawn', clearWithdrawReason: true);
-        }
-        if (r.status == 'rejected') {
-          return r.copyWith(status: 'pending', clearWithdrawReason: true);
-        }
-        return r;
-      }).toList(),
-      outgoing: state.outgoing.map((r) {
-        if (r.status == 'rejected') {
-          return r.copyWith(status: 'pending', clearWithdrawReason: true);
-        }
-        return r;
-      }).toList(),
-    );
+  Future<void> withdrawAcceptedPartner(String requestId) async {
+    await cancelOutgoing(requestId);
+  }
+
+  static String? _acceptedPartnerName(
+    List<RequestModel> incoming,
+    List<RequestModel> outgoing,
+  ) {
+    for (final request in incoming) {
+      if (request.status == 'accepted') return request.senderName;
+    }
+
+    for (final request in outgoing) {
+      if (request.status == 'accepted') return request.receiverName;
+    }
+
+    return null;
   }
 }
 
-final requestsProvider =
-    StateNotifierProvider<RequestsNotifier, RequestsState>((ref) {
-  return RequestsNotifier();
-});
+final requestsProvider = StateNotifierProvider<RequestsNotifier, RequestsState>(
+  (ref) {
+    return RequestsNotifier();
+  },
+);
